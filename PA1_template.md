@@ -9,7 +9,8 @@ output: html_document
 ## R Markdown
 
 This is my assignment for Reproductible Research course, Peer Assesment 1
-```{r, echo=TRUE}
+
+```r
 ##reading data
 activities<-read.csv(file="activity.csv", head=TRUE, sep=",") ##reading data in the folder, must be unpacked .csv data
 ```
@@ -26,12 +27,29 @@ Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and 
 
 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?Calculate and report the mean and median total number of steps taken per day
 
-```{r, echo=TRUE}
+
+```r
 activities2<-na.omit(activities) ##omitting NA rows
 steps_day<-aggregate(steps~date, activities2, sum) ##aggregating sum of total number of steps
 hist(steps_day$steps, main="Number of days with different number of total steps each day", xlab="Total number of steps per day") ##creating histogram
+```
+
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png)
+
+```r
 mean(steps_day$steps) ##mean total steps
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(steps_day$steps) ##median total steps
+```
+
+```
+## [1] 10765
 ```
 
 ##What is the average daily activity pattern?
@@ -40,11 +58,22 @@ median(steps_day$steps) ##median total steps
 
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-```{r, echo=TRUE}
+
+```r
 interval_steps<-aggregate(steps~interval, activities2, mean)
 plot(interval_steps$interval, interval_steps$steps, type="l", main="Average number of steps taken, averaged accross all days", ylab="Average number of steps", xlab="Interval")
+```
+
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png)
+
+```r
 row_id<-which.max(interval_steps$steps)
 interval_steps[row_id,]
+```
+
+```
+##     interval    steps
+## 104      835 206.1698
 ```
 Interval 835 has 206 steps which is the maximum across all data. 
 
@@ -59,13 +88,20 @@ Interval 835 has 206 steps which is the maximum across all data.
 4. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
 5. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
-```{r, echo=TRUE}
+
+```r
 summary(activities$steps)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+##    0.00    0.00    0.00   37.38   12.00  806.00    2304
 ```
 2304 rows with missing values
 
 Filling missing step values with each interval groups median
-```{r, echo=TRUE}
+
+```r
 library(plyr)
 impute <- function(x, fun) {
   missing <- is.na(x)
@@ -75,8 +111,24 @@ new_activities<- ddply(activities, ~ interval, transform, steps = impute(steps, 
 
 steps_day2<-aggregate(steps~date, new_activities, sum)
 hist(steps_day2$steps, main="Number of days with different number of total steps each day", xlab="Total number of steps per day")
+```
+
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png)
+
+```r
 mean(steps_day2$steps)
+```
+
+```
+## [1] 9503.869
+```
+
+```r
 median(steps_day2$steps)
+```
+
+```
+## [1] 10395
 ```
 When missing values in steps are replaced with the mean steps of each interval, it seems that there are a lot more days with less than 5000 steps taken. It also lowers the mean and median daily steps, especially the mean score.
 
@@ -89,7 +141,8 @@ For this part the weekdays() function may be of some help here. Use the dataset 
 
 2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
 
-```{r}
+
+```r
 library(ggplot2)
 mydate<-as.Date(new_activities$date, format="%Y-%m-%d")
 
@@ -104,5 +157,7 @@ new_activities$daytype <- as.factor(sapply(new_activities$date, daytype))
 interval_steps2<-aggregate(steps~interval+daytype, new_activities, mean)
 qplot(interval,steps,data=interval_steps2, geom=c("line"), xlab="Interval", ylab="Number of steps", main="Average number of steps during weekdays and weekends")+facet_wrap(~daytype, ncol=1)
 ```
+
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png)
 
 It seems that during weekdays the days start around six o'clock in the morning whereas during weekends one can sleep longer. Data also shows that the person is more active during the weekends than during weekdays
