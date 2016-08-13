@@ -13,6 +13,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ## R Markdown
 
 This is my assignment for Reproductible Research course, Peer Assesment 1
+```{r, echo=TRUE}
+##reading data
+activities<-read.csv(file="activity.csv", head=TRUE, sep=",") ##reading data in the folder, must be unpacked .csv data
+```
 
 ##What is mean total number of steps taken per day?
 
@@ -26,8 +30,7 @@ Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and 
 
 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?Calculate and report the mean and median total number of steps taken per day
 
-```{r}
-activities<-read.csv(file="activity.csv", head=TRUE, sep=",") ##reading data in the folder
+```{r, echo=TRUE}
 activities2<-na.omit(activities) ##omitting NA rows
 steps_day<-aggregate(steps~date, activities2, sum) ##aggregating sum of total number of steps
 hist(steps_day$steps, main="Number of days with different number of total steps each day", xlab="Total number of steps per day") ##creating histogram
@@ -60,25 +63,50 @@ Interval 835 has 206 steps which is the maximum across all data.
 4. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
 5. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
-```{r}
+```{r, echo=TRUE}
 summary(activities$steps)
 ```
 2304 rows with missing values
-```{r}
-summary(activities$steps)
-```
+
 Filling missing step values with each interval groups median
-```{r}
+```{r, echo=TRUE}
 library(plyr)
 impute <- function(x, fun) {
   missing <- is.na(x)
   replace(x, missing, fun(x[!missing]))
 }
 new_activities<- ddply(activities, ~ interval, transform, steps = impute(steps, median))
+
 steps_day2<-aggregate(steps~date, new_activities, sum)
 hist(steps_day2$steps, main="Number of days with different number of total steps each day", xlab="Total number of steps per day")
 mean(steps_day2$steps)
 median(steps_day2$steps)
 ```
-When missing values in steps are replaced with the mean steps of each interval, it seems that there are a lot more days with less than 5000 steps taken. It also lowers the mean and median daily steps.
+When missing values in steps are replaced with the mean steps of each interval, it seems that there are a lot more days with less than 5000 steps taken. It also lowers the mean and median daily steps, especially the mean score.
 
+
+##Are there differences in activity patterns between weekdays and weekends?
+
+For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
+
+1. Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+
+2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
+
+```{r}
+library(ggplot2)
+mydate<-as.Date(new_activities$date, format="%Y-%m-%d")
+
+daytype <- function(date) {
+  if (weekdays(as.Date(date)) %in% c("lauantai", "sunnuntai")) { ##lauantai is Saturday and sunnuntai is Sunday in Finnish
+    "weekend"
+  } else {
+    "weekday"
+  }
+}
+new_activities$daytype <- as.factor(sapply(new_activities$date, daytype))
+interval_steps2<-aggregate(steps~interval+daytype, new_activities, mean)
+qplot(interval,steps,data=interval_steps2, geom=c("line"), xlab="Interval", ylab="Number of steps", main="Average number of steps during weekdays and weekends")+facet_wrap(~daytype, ncol=1)
+```
+
+It seems that during weekdays the days start around six o'clock in the morning whereas during weekends one can sleep longer. Data also shows that the person is more active during the weekends than during weekdays
